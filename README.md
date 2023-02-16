@@ -1,17 +1,6 @@
-## My Project
+# How to use Protocol Buffers with AWS IoT Core to build cross-language smart applications
 
-TODO: Fill this README out!
+This code repository is a companion asset to the AWS IoT Blog post
+[How to use Protocol Buffers with AWS IoT Core to build cross-language smart applications](insert url).
 
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
+Se post for additional context and instructions for running this sample.

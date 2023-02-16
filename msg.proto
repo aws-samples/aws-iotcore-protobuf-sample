@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message Telemetry
+{
+  enum MsgType
+  {
+    MSGTYPE_NORMAL = 0;
+    MSGTYPE_ALERT = 1;
+  }
+  MsgType msgType = 1;
+  string instrumentTag = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  double value = 4;
+}

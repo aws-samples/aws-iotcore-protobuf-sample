@@ -1,0 +1,76 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  FileDescriptorBucketName:
+    Type: String
+    Description: Name of the bucket which will contain the protobuf file descriptor
+
+Resources:
+  FileDescriptorBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref FileDescriptorBucketName
+
+  FileDescriptorBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FileDescriptorBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:Get*'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref FileDescriptorBucket
+                - /*
+            Principal:
+              Service:
+              - iot.amazonaws.com
+
+  IoTCoreServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: IoTCoreServiceSampleRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - iot.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: RepublishPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'iot:Publish'
+                Resource: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/test/telemetry_alerts
+
+  ProtobufIoTCoreRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: ProtobufAlertRule
+      TopicRulePayload:
+        Actions:
+          - Republish:
+              Qos: 1
+              Topic: test/telemetry_alerts
+              RoleArn: !GetAtt IoTCoreServiceRole.Arn
+        AwsIotSqlVersion: "2016-03-23"
+        Sql: !Sub |
+          SELECT 
+            VALUE decode(encode(*, 'base64'), "proto", "${FileDescriptorBucketName}", "msg/filedescriptor.desc", "msg", "Telemetry")
+          FROM
+            'test/telemetry_all'
+          WHERE
+            decode(encode(*, 'base64'), "proto", "${FileDescriptorBucketName}", "msg/filedescriptor.desc", "msg", "Telemetry").msgType = "MSGTYPE_ALERT"
