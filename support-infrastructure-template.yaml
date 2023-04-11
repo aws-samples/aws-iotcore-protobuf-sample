@@ -14,6 +14,12 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       BucketName: !Ref FileDescriptorBucketName
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   FileDescriptorBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -33,6 +39,15 @@ Resources:
             Principal:
               Service:
               - iot.amazonaws.com
+          - Effect: Deny
+            Principal: "*"
+            Action: "*"
+            Resource:
+              - !Sub "arn:aws:s3:::${FileDescriptorBucketName}/*"
+              - !Sub "arn:aws:s3:::${FileDescriptorBucketName}"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   IoTCoreServiceRole:
     Type: AWS::IAM::Role
